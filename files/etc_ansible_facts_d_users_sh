@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "[" >/etc/ansible/facts.d/users.fact
+cat /etc/passwd | perl -aF: -ne 'print "{\"name\": \"",$F[0],"\",\"home\": \"",$F[5],"\"},\n" if $F[2] > 499' >>/etc/ansible/facts.d/users.fact
+echo "0]" >>/etc/ansible/facts.d/users.fact

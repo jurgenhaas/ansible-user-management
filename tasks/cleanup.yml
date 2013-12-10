@@ -1,0 +1,35 @@
+##
+# Task file in Ansible role "users" to securely lock deprecated user accounts.
+#
+
+---
+# file: cleanup.yml
+
+- name: "Make sure, the directory exists"
+  file: dest='/etc/ansible/facts.d'
+        state=directory
+        owner=root
+        group=root
+        mode=775
+- name: "Copy the extract script"
+  copy: src='etc_ansible_facts_d_users_sh'
+        dest='/etc/ansible/facts.d/users.sh'
+        owner=root
+        group=root
+        mode=755
+- name: "Extract user list"
+  shell: /etc/ansible/facts.d/users.sh
+- name: "Gather facts"
+  setup:
+- name: "Unlock legitimate user accounts"
+  command: usermod --unlock {{item.name}}
+  with_items: ansible_local.users
+  when: item.name is defined and item.name in users
+- name: "Lock deprecated user accounts"
+  command: usermod --lock {{item.name}}
+  with_items: ansible_local.users
+  when: item.name is defined and item.name not in users
+- name: "Disable ssh keys for deprecated user accounts"
+  command: rm {{item.home}}/.ssh/authorized_keys
+  with_items: ansible_local.users
+  when: item.name is defined and item.name not in users
